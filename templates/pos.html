@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Point of Sale</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: center;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      input[type="number"] {
+        width: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4">
+          <h2>Search Items</h2>
+          <!-- Add your search input and item group selection here -->
+        </div>
+        <div class="col-md-8">
+          <h2>Customer Information</h2>
+          <div class="form-inline">
+            <div class="form-group col-md-6">
+              <label for="customerName">Customer Name:</label>
+              <input type="text" id="customerName" class="form-control" />
+            </div>
+            <div class="form-group col-md-6">
+              <label for="customerPhone">Customer Phone:</label>
+              <input type="text" id="customerPhone" class="form-control" />
+            </div>
+          </div>
+          <h2>Items</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Rate</th>
+                <th>Discount (%)</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <input type="text" id="itemName1" value="Item 1">
+                </td>
+                <td>
+                  <button onclick="decrementQuantity(1)">-</button>
+                  <input type="number" id="quantity1" value="0" oninput="updateSubtotal(1)">
+                  <button onclick="incrementQuantity(1)">+</button>
+                </td>
+                <td>
+                  <input type="number" id="rate1" value="10.00" oninput="updateSubtotal(1)">
+                </td>
+                <td>
+                  <input type="number" id="discount1" value="0" oninput="updateSubtotal(1)">
+                </td>
+                <td id="subtotal1">$0.00</td>
+              </tr>
+            </tbody>
+          </table>
+          <button onclick="addItemRow()">Add Item</button>
+          <h2>Payment Information</h2>
+          <p>Net Total: $ <span id="netTotal">0.00</span>
+          </p>
+          <p>Tax (%): <input type="number" id="tax" value="7" oninput="calculateTotals()">
+          </p>
+          <!-- <P>Discount: $<input type="number" id="discount1" value="7" oninput="calculateTotals()"></P> -->
+          <p>Discount: $ <span id="discountAmount">0.00</span>
+          </p>
+          <p>Grand Total: $ <span id="grandTotal">0.00</span>
+          </p>
+          <p>Rounded Total: $ <span id="roundedTotal">0.00</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      let itemIndex = 1;
+
+      function incrementQuantity(itemId) {
+        const quantityInput = document.getElementById(`quantity${itemId}`);
+        const quantity = parseInt(quantityInput.value);
+        quantityInput.value = quantity + 1;
+        updateSubtotal(itemId);
+      }
+
+      function decrementQuantity(itemId) {
+        const quantityInput = document.getElementById(`quantity${itemId}`);
+        const quantity = parseInt(quantityInput.value);
+        if (quantity > 0) {
+          quantityInput.value = quantity - 1;
+          updateSubtotal(itemId);
+        }
+      }
+
+      function updateSubtotal(itemId) {
+        const quantity = parseInt(document.getElementById(`quantity${itemId}`).value);
+        const rate = parseFloat(document.getElementById(`rate${itemId}`).value);
+        const discount = parseFloat(document.getElementById(`discount${itemId}`).value);
+        const subtotal = (rate - (rate * discount / 100)) * quantity;
+        document.getElementById(`subtotal${itemId}`).textContent = `$${subtotal.toFixed(2)}`;
+        calculateTotals();
+      }
+      //     function updateSubtotal(itemId) {
+      //     const quantityInput = document.getElementById(`quantity${itemId}`);
+      //     const rateInput = document.getElementById(`rate${itemId}`);
+      //     const discountInput = document.getElementById(`discount${itemId}`);
+      //     const subtotalCell = document.getElementById(`subtotal${itemId}`);
+      //     const item_id = quantityInput.getAttribute("data-item-id");
+      //     const quantity = parseInt(quantityInput.value);
+      //     const rate = parseFloat(rateInput.value);
+      //     const discount = parseFloat(discountInput.value);
+      //     fetch('/update_subtotal', {
+      //         method: 'POST',
+      //         body: new URLSearchParams({
+      //             'itemId': item_id,
+      //             'quantity': quantity,
+      //             'rate': rate,
+      //             'discount': discount
+      //         }),
+      //         headers: {
+      //             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      //         }
+      //     })
+      //     .then(response => response.json())
+      //     .then(data => {
+      //         subtotalCell.textContent = `$${data.subtotal.toFixed(2)}`;
+      //         calculateTotals();
+      //     });
+      // }
+      function calculateTotals() {
+        let totalSubtotal = 0;
+        document.querySelectorAll("td[id^='subtotal']").forEach(subtotalCell => {
+          totalSubtotal += parseFloat(subtotalCell.textContent.replace('$', ''));
+        });
+        const taxPercentage = parseFloat(document.getElementById("tax").value);
+        const taxRate = taxPercentage / 100;
+        const netTotal = totalSubtotal;
+        const tax = totalSubtotal * taxRate;
+        const discount = parseFloat(document.getElementById("discount1").value); // You can specify a particular input for discount
+        const discountAmount = (totalSubtotal * discount) / 100;
+        const grandTotal = netTotal + tax - discountAmount;
+        const roundedTotal = Math.round(grandTotal);
+        document.getElementById("netTotal").textContent = netTotal.toFixed(2);
+        document.getElementById("tax").textContent = tax.toFixed(2);
+        document.getElementById("discountAmount").textContent = discountAmount.toFixed(2);
+        document.getElementById("grandTotal").textContent = grandTotal.toFixed(2);
+        document.getElementById("roundedTotal").textContent = roundedTotal.toFixed(2);
+      }
+      //     function calculatePayment() {
+      //     const netTotal = parseFloat(document.getElementById("netTotal").textContent);
+      //     const taxPercentage = parseFloat(document.getElementById("tax").value);
+      //     const discountAmount = parseFloat(document.getElementById("discountAmount").textContent);
+      //     fetch('/calculate_totals', {
+      //         method: 'POST',
+      //         body: new URLSearchParams({
+      //             'netTotal': netTotal,
+      //             'tax': taxPercentage,
+      //             'discountAmount': discountAmount
+      //         }),
+      //         headers: {
+      //             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      //         }
+      //     })
+      //     .then(response => response.json())
+      //     .then(data => {
+      //         document.getElementById("tax").textContent = data.tax.toFixed(2);
+      //         document.getElementById("grandTotal").textContent = data.grand_total.toFixed(2);
+      //         document.getElementById("roundedTotal").textContent = data.rounded_total.toFixed(2);
+      //     });
+      // }
+      function addItemRow() {
+        itemIndex++;
+        const newRow = `
+                
+									<tr>
+										<td>
+											<input type="text" id="itemName${itemIndex}" value="Item ${itemIndex}">
+											</td>
+											<td>
+												<button onclick="decrementQuantity(${itemIndex})">-</button>
+												<input type="number" id="quantity${itemIndex}" value="0" oninput="updateSubtotal(${itemIndex})">
+													<button onclick="incrementQuantity(${itemIndex})">+</button>
+												</td>
+												<td>
+													<input type="number" id="rate${itemIndex}" value="10.00" oninput="updateSubtotal(${itemIndex})">
+													</td>
+													<td>
+														<input type="number" id="discount${itemIndex}" value="0" oninput="updateSubtotal(${itemIndex})">
+														</td>
+														<td id="subtotal${itemIndex}">$0.00</td>
+													</tr>
+            `;
+        const tableBody = document.querySelector("table tbody");
+        tableBody.insertAdjacentHTML('beforeend', newRow);
+      }
+    </script>
+  </body>
+</html>
